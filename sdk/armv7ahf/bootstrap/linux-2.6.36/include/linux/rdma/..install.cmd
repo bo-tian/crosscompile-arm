@@ -1,0 +1,1 @@
+cmd_/home/repo/linux/usr/include/rdma/.install := perl scripts/headers_install.pl /home/repo/linux/include/rdma /home/repo/linux/usr/include/rdma arm ib_user_mad.h; perl scripts/headers_install.pl /home/repo/linux/include/rdma /home/repo/linux/usr/include/rdma arm ; touch /home/repo/linux/usr/include/rdma/.install

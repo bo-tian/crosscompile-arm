@@ -1,0 +1,1 @@
+cmd_/home/repo/linux/usr/include/xen/.install := perl scripts/headers_install.pl /home/repo/linux/include/xen /home/repo/linux/usr/include/xen arm evtchn.h; perl scripts/headers_install.pl /home/repo/linux/include/xen /home/repo/linux/usr/include/xen arm ; touch /home/repo/linux/usr/include/xen/.install

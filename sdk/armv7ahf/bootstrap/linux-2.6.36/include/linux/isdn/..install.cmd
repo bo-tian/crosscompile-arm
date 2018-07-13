@@ -1,0 +1,1 @@
+cmd_/home/repo/linux/usr/include/linux/isdn/.install := perl scripts/headers_install.pl /home/repo/linux/include/linux/isdn /home/repo/linux/usr/include/linux/isdn arm capicmd.h; perl scripts/headers_install.pl /home/repo/linux/include/linux/isdn /home/repo/linux/usr/include/linux/isdn arm ; touch /home/repo/linux/usr/include/linux/isdn/.install

@@ -1,0 +1,1 @@
+cmd_/home/repo/linux/usr/include/linux/hdlc/.install := perl scripts/headers_install.pl /home/repo/linux/include/linux/hdlc /home/repo/linux/usr/include/linux/hdlc arm ioctl.h; perl scripts/headers_install.pl /home/repo/linux/include/linux/hdlc /home/repo/linux/usr/include/linux/hdlc arm ; touch /home/repo/linux/usr/include/linux/hdlc/.install

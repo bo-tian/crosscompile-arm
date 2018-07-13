@@ -1,0 +1,1 @@
+cmd_/home/repo/linux/usr/include/video/.install := perl scripts/headers_install.pl /home/repo/linux/include/video /home/repo/linux/usr/include/video arm edid.h sisfb.h uvesafb.h; perl scripts/headers_install.pl /home/repo/linux/include/video /home/repo/linux/usr/include/video arm ; touch /home/repo/linux/usr/include/video/.install

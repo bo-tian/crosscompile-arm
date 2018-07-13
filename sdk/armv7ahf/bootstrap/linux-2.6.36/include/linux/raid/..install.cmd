@@ -1,0 +1,1 @@
+cmd_/home/repo/linux/usr/include/linux/raid/.install := perl scripts/headers_install.pl /home/repo/linux/include/linux/raid /home/repo/linux/usr/include/linux/raid arm md_p.h md_u.h; perl scripts/headers_install.pl /home/repo/linux/include/linux/raid /home/repo/linux/usr/include/linux/raid arm ; touch /home/repo/linux/usr/include/linux/raid/.install

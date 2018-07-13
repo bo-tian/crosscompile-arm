@@ -1,0 +1,1 @@
+cmd_/home/repo/linux/usr/include/linux/wimax/.install := perl scripts/headers_install.pl /home/repo/linux/include/linux/wimax /home/repo/linux/usr/include/linux/wimax arm i2400m.h; perl scripts/headers_install.pl /home/repo/linux/include/linux/wimax /home/repo/linux/usr/include/linux/wimax arm ; touch /home/repo/linux/usr/include/linux/wimax/.install

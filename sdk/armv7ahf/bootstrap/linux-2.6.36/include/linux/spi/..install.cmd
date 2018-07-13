@@ -1,0 +1,1 @@
+cmd_/home/repo/linux/usr/include/linux/spi/.install := perl scripts/headers_install.pl /home/repo/linux/include/linux/spi /home/repo/linux/usr/include/linux/spi arm spidev.h; perl scripts/headers_install.pl /home/repo/linux/include/linux/spi /home/repo/linux/usr/include/linux/spi arm ; touch /home/repo/linux/usr/include/linux/spi/.install
