@@ -3,11 +3,11 @@
 #export LIBCC=$SYSROOT/../host/lib/libclang_rt.builtins-arm.a
 source ./target.conf
 
-build="${BUILD}/musl"
 repo="${REPO}/musl"
+build="${BUILD}/musl"
 prefix="${SYSROOT}"
-CC="${CC} ${CFLAGS}"
-#LDFLAGS="-Wl,--gc-sections"
+CC="${CC} ${CFLAGS} -ffunction-sections -fdata-sections"
+LDFLAGS="-Wl,--gc-sections"
 CROSS_COMPILE="llvm-"
 
 init(){
@@ -34,7 +34,7 @@ compile(){
 	mkdir -pv ${build}
 
 	pushd ${build}
-	CC="${CC}" LDFLAGS="" CROSS_COMPILE="${CROSS_COMPILE}" ${repo}/musl/configure --prefix=${prefix} --exec-prefix=${prefix} --syslibdir=${prefix}
+	CC="${CC}" LDFLAGS="${LDFLAGS}" CROSS_COMPILE="${CROSS_COMPILE}" ${repo}/musl/configure --prefix=${prefix} --exec-prefix=${prefix} --syslibdir=${prefix}
 	make clean; make; make install
 	popd
 }
