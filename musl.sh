@@ -11,9 +11,6 @@ LDFLAGS="-Wl,--gc-sections"
 CROSS_COMPILE="llvm-"
 
 init(){
-	if [ -d "${repo}" ]; then
-		rm -r "${repo}"
-	fi
 	pushd "${repo}"
 	git clone git://git.musl-libc.org/musl
 	popd
@@ -35,7 +32,14 @@ compile(){
 
 	pushd ${build}
 	CC="${CC}" LDFLAGS="${LDFLAGS}" CROSS_COMPILE="${CROSS_COMPILE}" ${repo}/musl/configure --prefix=${prefix} --exec-prefix=${prefix} --syslibdir=${prefix}
-	make clean; make; make install
+	make
+	if [ "$?" != "0" ]; then
+		echo ***************** libc make error *********************
+		exit 1
+	fi
+	echo =================== libc OK =================
+	make install
+	echo =================== libc OK =================
 	popd
 }
 
