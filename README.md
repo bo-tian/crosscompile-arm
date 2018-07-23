@@ -12,9 +12,7 @@ BUILD: where the building are placed.
 
 1. What's the bootstrap directory for?
 
-Libc header file stdlib.h which is needed by compiler-rt.
-
-Linux header files.
+Libc header file are needed by compiler-rt and Linux header files.
 
 2. What would a full cross compile be like?
 
@@ -25,7 +23,7 @@ Download LLVM source code. (llvm, compiler-rt, libunwind, libcxxabi, libcxx, etc
 For example, execute "sh llvm.sh init".
 
 Build compiler-rt library.
-For example, execute "sh llvm.sh standalone compiler-rt"
+For example, execute "sh llvm.sh standalone_compile compiler-rt"
 
 Build musl(libc) library.
 For example, execute "sh musl.sh init; sh musl.sh compile"
@@ -34,4 +32,3 @@ Build libcxx(libc++) library.
 For example, execute "sh llvm.sh llvm"
 
 From here, compiler-rt/libc/libc++ are ready.
-
