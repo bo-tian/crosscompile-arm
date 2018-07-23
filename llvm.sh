@@ -103,15 +103,14 @@ standalone_compile(){
 
 		# https://bcain-llvm.readthedocs.io/projects/libunwind/en/latest/BuildingLibunwind/
 		# unwind depends on cross compiled libunwind -lunwind
-		cmake -G "Unix Makefiles" ${libunwind} -DCMAKE_SYSTEM_PROCESSOR=arm -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_CROSSCOMPILING=True -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_LIBCXX=ON -DLIBUNWIND_USE_COMPILER_RT=True -DCMAKE_CXX_FLAGS="${CXXFLAGS} -I${libcxxabi}/include/ -I${libcxx}/include/" -DCMAKE_C_FLAGS="${CFLAGS} -I${libcxxabi}/include/ -lunwind" -DLIBUNWIND_TARGET_TRIPLE=${TRIPLE}
-		if [ "$?" != 0 ]; then
-			echo libunwind configure failed!
+		cmake -G "Unix Makefiles" ${libunwind} -DCMAKE_SYSTEM_PROCESSOR=arm -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_CROSSCOMPILING=True -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_LIBCXX=ON -DLIBUNWIND_USE_COMPILER_RT=True -DCMAKE_CXX_FLAGS="${CXXFLAGS} -I${libcxxabi}/include/ -I${libcxx}/include/" -DCMAKE_C_FLAGS="${CFLAGS} -I${libcxxabi}/include/" -DLIBUNWIND_TARGET_TRIPLE=${TRIPLE} -DLIBUNWIND_ENABLE_SHARED=OFF
+		if [ "$?" != "0" ]; then
+			echo ***************** libunwind cmake error ************************
 			exit 1
 		fi
-
 		make
-		if [ "$?" != 0 ]; then
-			echo libunwind building failed!
+		if [ "$?" != "0" ]; then
+			echo ***************** libunwind compile error ************************
 			exit 1
 		fi
 
@@ -213,7 +212,7 @@ compile() {
 	# libunwind is the exception handle library, which is needed by libcxxabi as well as libcxx. The equivolent library used by glibc is libgcc_eh/libgcc_s.
 	# libcxxabi is the abi definition library, which is needed by libcxx. The equivolent library used by glibc is libsup++.
 	# Add -Qunused-arguments to mitigate llvm bug which false reports compiler tool not supporting -fPIC.
-	CFLAGS="${CFLAGS} -Qunused-arguments -lunwind"
+	CFLAGS="${CFLAGS} -Qunused-arguments"
 	CXXFLAGS="${CXXFLAGS} -Qunused-arguments -I${libcxx}/include -I${libunwind}/include"
 
 	compile_llvm() {
@@ -225,7 +224,7 @@ compile() {
 		pushd ${BUILD}/llvm
 
 		# llvm bug, to bundle libunwind/libcxxabi/libcxx in one, we need to explicitly build libcxxabi and specify libcxxabi library location in LIBCXX_CXX_ABI_LIBRARY_PATH.
-		cmake -G "Unix Makefiles" ${llvm} -DCMAKE_SYSTEM_PROCESSOR=arm -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_CROSSCOMPILING=True -DCMAKE_C_FLAGS="${CFLAGS}" -DCMAKE_CXX_FLAGS="${CXXFLAGS}" -DCMAKE_BUILD_TYPE=Release -DLIBCXX_HAS_MUSL_LIBC=ON -DLIBCXX_CXX_ABI=libcxxabi -DLIBCXX_CXX_ABI_INCLUDE_PATHS=${libcxxabi}/include -DLIBCXX_USE_COMPILER_RT=True -DLIBCXX_TARGET_TRIPLE=${TRIPLE} -DLLVM_ENABLE_LIBCXX=True -DLLVM_TARGETS_TO_BUILD=ARM -DLLVM_ENABLE_LIBCXX=True  -DLIBCXX_CXX_ABI_LIBRARY_PATH="lib/" -DLIBCXX_ENABLE_STATIC_ABI_LIBRARY=ON -DLIBCXXABI_ENABLE_STATIC_UNWINDER=True -DLIBCXXABI_USE_LLVM_UNWINDER=ON -DLIBUNWIND_USE_COMPILER_RT=True -DLIBCXXABI_USE_COMPILER_RT=True -DLIBUNWIND_TARGET_TRIPLE=${TRIPLE} -DLIBCXXABI_TARGET_TRIPLE=${TRIPLE} -DCMAKE_ASM_FLAGS="${CFLAGS}" -DCMAKE_C_COMPILER_TARGET=${TRIPLE} -DCMAKE_CXX_COMPILER_TARGET=${TRIPLE} -DCOMPILER_RT_DEFAULT_TARGET_ONLY=True -DCOMPILER_RT_RUNTIME_LIBRARY=buildins -DCMAKE_AR=/usr/bin/llvm-ar -DCOMPILER_RT_BUILD_SANITIZERS=OFF -DCOMPILER_RT_BUILD_XRAY=OFF -DCOMPILER_RT_BUILD_LIBFUZZER=OFF -DCOMPILER_RT_BUILD_PROFILE=OFF 
+		cmake -G "Unix Makefiles" ${llvm} -DCMAKE_SYSTEM_PROCESSOR=arm -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_CROSSCOMPILING=True -DCMAKE_C_FLAGS="${CFLAGS}" -DCMAKE_CXX_FLAGS="${CXXFLAGS}" -DCMAKE_BUILD_TYPE=Release -DLIBCXX_HAS_MUSL_LIBC=ON -DLIBCXX_CXX_ABI=libcxxabi -DLIBCXX_CXX_ABI_INCLUDE_PATHS=${libcxxabi}/include -DLIBCXX_USE_COMPILER_RT=True -DLIBCXX_TARGET_TRIPLE=${TRIPLE} -DLLVM_ENABLE_LIBCXX=True -DLLVM_TARGETS_TO_BUILD=ARM -DLLVM_ENABLE_LIBCXX=True  -DLIBCXX_CXX_ABI_LIBRARY_PATH="lib/" -DLIBCXX_ENABLE_STATIC_ABI_LIBRARY=ON -DLIBCXXABI_ENABLE_STATIC_UNWINDER=True -DLIBCXXABI_USE_LLVM_UNWINDER=ON -DLIBUNWIND_USE_COMPILER_RT=True -DLIBCXXABI_USE_COMPILER_RT=True -DLIBUNWIND_TARGET_TRIPLE=${TRIPLE} -DLIBCXXABI_TARGET_TRIPLE=${TRIPLE} -DCMAKE_ASM_FLAGS="${CFLAGS}" -DCMAKE_C_COMPILER_TARGET=${TRIPLE} -DCMAKE_CXX_COMPILER_TARGET=${TRIPLE} -DCOMPILER_RT_DEFAULT_TARGET_ONLY=True -DCOMPILER_RT_RUNTIME_LIBRARY=buildins -DCMAKE_AR=/usr/bin/llvm-ar -DCOMPILER_RT_BUILD_SANITIZERS=OFF -DCOMPILER_RT_BUILD_XRAY=OFF -DCOMPILER_RT_BUILD_LIBFUZZER=OFF -DCOMPILER_RT_BUILD_PROFILE=OFF -DLIBUNWIND_ENABLE_SHARED=OFF
 		if [ "$?" != 0 ]; then
 			echo llvm configure failed!
 			exit 1
@@ -243,9 +242,9 @@ compile() {
 			cp -v lib/libc++.so* ${SYSROOT}/lib/
 			# Some c application still needs libunwind library
 			cp -v lib/libunwind.a ${SYSROOT}/lib/
-			mkdir -vp ${SYSROOT}/usr/include/c++ 
+			mkdir -pv ${SYSROOT}/usr/include/c++ 
 			cp -rv ${libcxx}/include/* ${SYSROOT}/usr/include/c++/
-			cp -rv ${libabicxx}/include/* ${SYSROOT}/usr/include/c++/
+			cp -rv ${libcxxabi}/include/* ${SYSROOT}/usr/include/c++/
 			cp -rv ${libunwind}/include/* ${SYSROOT}/usr/include/c++/
 
 			cp -v lib/libc++.so* ${TARGET}/lib/
@@ -267,21 +266,6 @@ compile() {
 	}
 
 	compile_llvm "libcxx"
-
-#	case "$1" in
-#		*"xx")
-#			compile_llvm "libcxx"
-#			;;
-#		"rt"*)
-#			compile_llvm "compiler-rt"
-#			;;
-#		"all")
-#			compile_llvm
-#			;;
-#		*)
-#			echo "Subccommands are available, please specify  libc[xx]/[rt]lib/all to build."
-#			;;
-#	esac
 }
 
 case "$1" in
