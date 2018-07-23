@@ -39,6 +39,9 @@ compile(){
 	fi
 	echo =================== libc OK =================
 	make install
+	echo ---- Now make some fake binaries to pass gcc link script ----
+	touch ${SYSROOT}/lib/crtbeginS.o
+	touch ${SYSROOT}/lib/crtendS.o
 	echo =================== libc OK =================
 	popd
 }
