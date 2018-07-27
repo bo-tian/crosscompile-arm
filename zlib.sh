@@ -6,9 +6,9 @@ repo="${REPO}/zlib"
 src="${repo}/zlib"
 build="${BUILD}/zlib"
 
-CFLAGS="${CFLAGS} -ffunction-sections -fdata-sections -Wl,--gc-sections"
+CFLAGS="${CFLAGS} ${COMPACT_LIB}"
 
-init() {
+init () {
 	if [ ! -d "${repo}" ]; then
 		mkdir -p "${repo}"
 	else
@@ -21,14 +21,19 @@ init() {
 	popd
 }
 
-update() {
+update () {
+	if [ ! -d "${src}" ]; then
+		echo "zlib source code is nonexistent, please execute init first."
+		exit 1
+	fi
+
 	pushd "${src}"
 	git checkout master
 	git pull
 	popd
 }
 
-compile() {
+compile () {
 	if [ -d "${build}" ]; then
 		rm -r "${build}"
 	fi
