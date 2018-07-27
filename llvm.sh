@@ -5,8 +5,8 @@ source ./target.conf
 # LLVM suite release tag
 ver="origin/release_60"
 
-dir="${REPO}/llvm"
-llvm="${dir}/llvm"
+repo="${REPO}/llvm"
+llvm="${repo}/llvm"
 clang="${llvm}/tools/clang"
 lld="${llvm}/tools/lld"
 libcxx="${llvm}/projects/libcxx"
@@ -14,9 +14,9 @@ libcxxabi="${llvm}/projects/libcxxabi"
 libunwind="${llvm}/projects/libunwind"
 librt="${llvm}/projects/compiler-rt"
 
-init(){
+init () {
 	echo "=============== cloning llvm suite ==============="
-	pushd ${dir}
+	pushd ${repo}
 	git clone https://github.com/llvm-mirror/llvm.git
 	cd ${llvm}/projects/
 	git clone https://github.com/llvm-mirror/compiler-rt.git
@@ -29,7 +29,7 @@ init(){
 	popd
 }
 
-update_module(){
+update_module () {
 	pushd "$1"
 	git checkout master
 	git pull
@@ -37,7 +37,7 @@ update_module(){
 	popd
 }
 
-update(){
+update () {
 	update_module "${llvm}"
 	update_module "${clang}"
 	update_module "${lld}"
@@ -47,7 +47,7 @@ update(){
 	update_module "${librt}"
 }
 
-standalone_compile(){
+standalone_compile () {
 	export CC
 	export CXX
 	export AR
@@ -55,8 +55,8 @@ standalone_compile(){
 	# libunwind is the exception handle library, which is needed by libcxxabi as well as libcxx. The equivalent library in glibc is libgcc_eh/libgcc_s.
 	# libcxxabi is the abi definition library, which is needed by libcxx. The equivalent library in glibc is libsup++.
 	# Add -Qunused-arguments to mitigate llvm bug which falsely reports compiler tool not supporting -fPIC.
-	CFLAGS="${CFLAGS} -Qunused-arguments"
-	CXXFLAGS="${CXXFLAGS} -Qunused-arguments"
+	CFLAGS="${CFLAGS} -Qunused-arguments ${COMPACT_LIB}"
+	CXXFLAGS="${CXXFLAGS} -Qunused-arguments ${COMPACT_LIB}"
 
 	compile_rt() {
 		if [ -d "${BUILD}/compiler-rt" ]; then
@@ -88,7 +88,8 @@ standalone_compile(){
 		lib=`find lib/ -name libclang_rt.builtins\*.a`
 		cp -v ${lib} ${SYSROOT}/lib/
 		lib=`find ${SYSROOT}/lib -name libclang_rt.builtins\*.a` 
-		echo ---- Dont forget to execute \"cp -v ${lib} ${COMPILER_RT}\". ----
+		echo ---- Dont forget to execute: ----
+		echo ---- "\"cp -v ${lib} `clang ${CFLAGS} -print-libgcc-file-name`\"." ----
 		echo ======================= compiler-rt is OK =================================
 		popd
 	}
@@ -205,17 +206,24 @@ standalone_compile(){
 	esac
 }
 
-compile() {
+compile () {
 	export CXX
 	export CC
 
 	# libunwind is the exception handle library, which is needed by libcxxabi as well as libcxx. The equivolent library used by glibc is libgcc_eh/libgcc_s.
 	# libcxxabi is the abi definition library, which is needed by libcxx. The equivolent library used by glibc is libsup++.
 	# Add -Qunused-arguments to mitigate llvm bug which false reports compiler tool not supporting -fPIC.
-	CFLAGS="${CFLAGS} -Qunused-arguments"
-	CXXFLAGS="${CXXFLAGS} -Qunused-arguments -I${libcxx}/include -I${libunwind}/include"
+	CFLAGS="${CFLAGS} -Qunused-arguments -ffunction-sections -fdata-sections -Wl,--gc-sections"
+	CXXFLAGS="${CXXFLAGS} -Qunused-arguments -I${libcxx}/include -I${libunwind}/include -Wl,--gc-sections"
 
 	compile_llvm() {
+
+		if [ -d "${SYSROOT}/usr/include/c++" ]; then
+			echo *** c++ header files already exist, this will hinder the recompile ***
+			echo *** Please delete that directory if you want to continue. ***
+			exit 1
+		fi
+
 		if [ -d "${BUILD}/llvm" ]; then
 			rm -r ${BUILD}/llvm
 		fi	
@@ -226,7 +234,7 @@ compile() {
 		# llvm bug, to bundle libunwind/libcxxabi/libcxx in one, we need to explicitly build libcxxabi and specify libcxxabi library location in LIBCXX_CXX_ABI_LIBRARY_PATH.
 		cmake -G "Unix Makefiles" ${llvm} -DCMAKE_SYSTEM_PROCESSOR=arm -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_CROSSCOMPILING=True -DCMAKE_C_FLAGS="${CFLAGS}" -DCMAKE_CXX_FLAGS="${CXXFLAGS}" -DCMAKE_BUILD_TYPE=Release -DLIBCXX_HAS_MUSL_LIBC=ON -DLIBCXX_CXX_ABI=libcxxabi -DLIBCXX_CXX_ABI_INCLUDE_PATHS=${libcxxabi}/include -DLIBCXX_USE_COMPILER_RT=True -DLIBCXX_TARGET_TRIPLE=${TRIPLE} -DLLVM_ENABLE_LIBCXX=True -DLLVM_TARGETS_TO_BUILD=ARM -DLLVM_ENABLE_LIBCXX=True  -DLIBCXX_CXX_ABI_LIBRARY_PATH="lib/" -DLIBCXX_ENABLE_STATIC_ABI_LIBRARY=ON -DLIBCXXABI_ENABLE_STATIC_UNWINDER=True -DLIBCXXABI_USE_LLVM_UNWINDER=ON -DLIBUNWIND_USE_COMPILER_RT=True -DLIBCXXABI_USE_COMPILER_RT=True -DLIBUNWIND_TARGET_TRIPLE=${TRIPLE} -DLIBCXXABI_TARGET_TRIPLE=${TRIPLE} -DCMAKE_ASM_FLAGS="${CFLAGS}" -DCMAKE_C_COMPILER_TARGET=${TRIPLE} -DCMAKE_CXX_COMPILER_TARGET=${TRIPLE} -DCOMPILER_RT_DEFAULT_TARGET_ONLY=True -DCOMPILER_RT_RUNTIME_LIBRARY=buildins -DCMAKE_AR=/usr/bin/llvm-ar -DCOMPILER_RT_BUILD_SANITIZERS=OFF -DCOMPILER_RT_BUILD_XRAY=OFF -DCOMPILER_RT_BUILD_LIBFUZZER=OFF -DCOMPILER_RT_BUILD_PROFILE=OFF -DLIBUNWIND_ENABLE_SHARED=OFF
 		if [ "$?" != 0 ]; then
-			echo llvm configure failed!
+			echo *** llvm cmake error, abort. ***
 			exit 1
 		fi
 
@@ -234,7 +242,7 @@ compile() {
 			make cxxabi
 			make cxx
 			if [ "$?" != 0 ]; then
-				echo libcxx building failed!
+				echo *** libcxx compile error, abort. ***
 				exit 1
 			fi
 			echo ======================= libcxx is OK =================================
